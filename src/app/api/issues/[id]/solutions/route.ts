@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
 
     // Verify issue exists
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -20,9 +20,9 @@ export async function GET(
     }
 
     // Get all solutions for this issue, ordered by upvotes (descending) then by creation date
-    const solutions = db
-      .prepare('SELECT * FROM solutions WHERE issueId = ? ORDER BY upvotes DESC, createdAt ASC')
-      .all(id) as any[];
+    const solutions = (await db
+      .prepare('SELECT * FROM solutions WHERE "issueId" = ? ORDER BY upvotes DESC, "createdAt" ASC')
+      .all(id)) as any[];
 
     // Convert dates from strings to Date objects
     const formattedSolutions: Solution[] = solutions.map((solution) => ({
@@ -67,7 +67,7 @@ export async function POST(
     }
 
     // Verify issue exists
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -81,14 +81,14 @@ export async function POST(
 
     // Insert solution into database
     const stmt = db.prepare(`
-      INSERT INTO solutions (id, title, description, issueId, upvotes, createdAt)
+      INSERT INTO solutions (id, title, description, "issueId", upvotes, "createdAt")
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(solutionId, title.trim(), description.trim(), id, 0, now);
+    await stmt.run(solutionId, title.trim(), description.trim(), id, 0, now);
 
     // Fetch the created solution
-    const solution = db.prepare('SELECT * FROM solutions WHERE id = ?').get(solutionId) as any;
+    const solution = (await db.prepare('SELECT * FROM solutions WHERE id = ?').get(solutionId)) as any;
 
     const formattedSolution: Solution = {
       ...solution,
@@ -105,3 +105,4 @@ export async function POST(
     );
   }
 }
+

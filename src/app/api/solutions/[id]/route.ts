@@ -13,7 +13,7 @@ export async function PUT(
     const { upvotes } = body;
 
     // Check if solution exists
-    const solution = db.prepare('SELECT * FROM solutions WHERE id = ?').get(id) as any;
+    const solution = (await db.prepare('SELECT * FROM solutions WHERE id = ?').get(id)) as any;
     if (!solution) {
       return NextResponse.json(
         { error: 'Solution not found' },
@@ -24,10 +24,10 @@ export async function PUT(
     // Update upvotes
     const newUpvotes = upvotes !== undefined ? upvotes : solution.upvotes + 1;
     
-    db.prepare('UPDATE solutions SET upvotes = ? WHERE id = ?').run(newUpvotes, id);
+    await db.prepare('UPDATE solutions SET upvotes = ? WHERE id = ?').run(newUpvotes, id);
 
     // Fetch updated solution
-    const updatedSolution = db.prepare('SELECT * FROM solutions WHERE id = ?').get(id) as any;
+    const updatedSolution = (await db.prepare('SELECT * FROM solutions WHERE id = ?').get(id)) as any;
 
     const formattedSolution: Solution = {
       ...updatedSolution,
@@ -54,7 +54,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if solution exists
-    const solution = db.prepare('SELECT * FROM solutions WHERE id = ?').get(id) as any;
+    const solution = (await db.prepare('SELECT * FROM solutions WHERE id = ?').get(id)) as any;
     if (!solution) {
       return NextResponse.json(
         { error: 'Solution not found' },
@@ -63,7 +63,7 @@ export async function DELETE(
     }
 
     // Delete solution
-    db.prepare('DELETE FROM solutions WHERE id = ?').run(id);
+    await db.prepare('DELETE FROM solutions WHERE id = ?').run(id);
 
     return NextResponse.json(
       { message: 'Solution deleted successfully' },

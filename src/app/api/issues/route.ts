@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
       params.push(category);
     }
 
-    query += ' ORDER BY createdAt DESC';
+    query += ' ORDER BY "createdAt" DESC';
 
-    const issues = db.prepare(query).all(...params) as any[];
+    const issues = (await db.prepare(query).all(...params)) as any[];
 
     // Convert dates from strings to Date objects
     const formattedIssues: Issue[] = issues.map((issue) => ({
@@ -67,14 +67,14 @@ export async function POST(request: NextRequest) {
 
     // Insert into database
     const stmt = db.prepare(`
-      INSERT INTO issues (id, title, description, category, upvotes, createdAt, updatedAt)
+      INSERT INTO issues (id, title, description, category, upvotes, "createdAt", "updatedAt")
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
-    stmt.run(id, title, description, category, 0, now, now);
+    await stmt.run(id, title, description, category, 0, now, now);
 
     // Fetch the created issue
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
 
     const formattedIssue: Issue = {
       ...issue,

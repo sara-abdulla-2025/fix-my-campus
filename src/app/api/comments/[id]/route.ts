@@ -10,7 +10,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if comment exists
-    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(id) as any;
+    const comment = (await db.prepare('SELECT * FROM comments WHERE id = ?').get(id)) as any;
     if (!comment) {
       return NextResponse.json(
         { error: 'Comment not found' },
@@ -19,7 +19,7 @@ export async function DELETE(
     }
 
     // Delete comment
-    db.prepare('DELETE FROM comments WHERE id = ?').run(id);
+    await db.prepare('DELETE FROM comments WHERE id = ?').run(id);
 
     return NextResponse.json(
       { message: 'Comment deleted successfully' },

@@ -10,7 +10,7 @@ export async function GET(
   try {
     const { id } = await params;
     
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
 
     if (!issue) {
       return NextResponse.json(
@@ -47,7 +47,7 @@ export async function PUT(
     const { title, description, category, upvotes } = body;
 
     // Check if issue exists
-    const existingIssue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const existingIssue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!existingIssue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -92,15 +92,15 @@ export async function PUT(
     }
 
     // Always update the updatedAt timestamp
-    updates.push('updatedAt = ?');
+    updates.push('"updatedAt" = ?');
     values.push(new Date().toISOString());
     values.push(id); // Add id for WHERE clause
 
     const updateQuery = `UPDATE issues SET ${updates.join(', ')} WHERE id = ?`;
-    db.prepare(updateQuery).run(...values);
+    await db.prepare(updateQuery).run(...values);
 
     // Fetch updated issue
-    const updatedIssue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const updatedIssue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
 
     const formattedIssue: Issue = {
       ...updatedIssue,
@@ -128,7 +128,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Check if issue exists
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -137,7 +137,7 @@ export async function DELETE(
     }
 
     // Delete issue (CASCADE will handle related comments and solutions)
-    db.prepare('DELETE FROM issues WHERE id = ?').run(id);
+    await db.prepare('DELETE FROM issues WHERE id = ?').run(id);
 
     return NextResponse.json(
       { message: 'Issue deleted successfully' },

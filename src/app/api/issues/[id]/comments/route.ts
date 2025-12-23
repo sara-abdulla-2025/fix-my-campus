@@ -11,7 +11,7 @@ export async function GET(
     const { id } = await params;
 
     // Verify issue exists
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -20,9 +20,9 @@ export async function GET(
     }
 
     // Get all comments for this issue
-    const comments = db
-      .prepare('SELECT * FROM comments WHERE issueId = ? ORDER BY createdAt ASC')
-      .all(id) as any[];
+    const comments = (await db
+      .prepare('SELECT * FROM comments WHERE "issueId" = ? ORDER BY "createdAt" ASC')
+      .all(id)) as any[];
 
     // Convert dates from strings to Date objects
     const formattedComments: Comment[] = comments.map((comment) => ({
@@ -59,7 +59,7 @@ export async function POST(
     }
 
     // Verify issue exists
-    const issue = db.prepare('SELECT * FROM issues WHERE id = ?').get(id) as any;
+    const issue = (await db.prepare('SELECT * FROM issues WHERE id = ?').get(id)) as any;
     if (!issue) {
       return NextResponse.json(
         { error: 'Issue not found' },
@@ -73,14 +73,14 @@ export async function POST(
 
     // Insert comment into database
     const stmt = db.prepare(`
-      INSERT INTO comments (id, content, issueId, createdAt)
+      INSERT INTO comments (id, content, "issueId", "createdAt")
       VALUES (?, ?, ?, ?)
     `);
 
-    stmt.run(commentId, content.trim(), id, now);
+    await stmt.run(commentId, content.trim(), id, now);
 
     // Fetch the created comment
-    const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId) as any;
+    const comment = (await db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId)) as any;
 
     const formattedComment: Comment = {
       ...comment,
